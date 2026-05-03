@@ -34,6 +34,42 @@ DECLARE
     carol_id      uuid := 'd358a4bd-f653-4800-9d22-70bad04400c1';
 BEGIN
 
+-- ── Auth Users ────────────────────────────────────────
+-- Create auth.users rows so that the profiles FK is satisfied.
+-- On a hosted project these users are created via the dashboard;
+-- on a local reset they must be seeded here.
+INSERT INTO auth.users (
+  id, instance_id, aud, role,
+  email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at
+) VALUES
+  (researcher_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+   'researcher@test.com', crypt('password123', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}', '{}', now(), now()),
+  (alice_id,      '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+   'alice@test.com',      crypt('password123', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}', '{}', now(), now()),
+  (bob_id,        '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+   'bob@test.com',        crypt('password123', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}', '{}', now(), now()),
+  (carol_id,      '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+   'carol@test.com',      crypt('password123', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}', '{}', now(), now())
+ON CONFLICT (id) DO NOTHING;
+
+-- auth.identities links auth.users to a sign-in provider.
+-- Required for email/password sign-in to work locally.
+INSERT INTO auth.identities (
+  id, user_id, provider_id, identity_data, provider,
+  last_sign_in_at, created_at, updated_at
+) VALUES
+  (researcher_id, researcher_id, 'researcher@test.com', jsonb_build_object('sub', researcher_id::text, 'email', 'researcher@test.com'), 'email', now(), now(), now()),
+  (alice_id,      alice_id,      'alice@test.com',      jsonb_build_object('sub', alice_id::text,      'email', 'alice@test.com'),      'email', now(), now(), now()),
+  (bob_id,        bob_id,        'bob@test.com',        jsonb_build_object('sub', bob_id::text,        'email', 'bob@test.com'),        'email', now(), now(), now()),
+  (carol_id,      carol_id,      'carol@test.com',      jsonb_build_object('sub', carol_id::text,      'email', 'carol@test.com'),      'email', now(), now(), now())
+ON CONFLICT (id) DO NOTHING;
+
 -- ── Profiles ──────────────────────────────────────────
 INSERT INTO profiles (id, display_name, role, target_language) VALUES
   (researcher_id, 'Dr. Test', 'researcher',          NULL),
