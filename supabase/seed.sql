@@ -206,12 +206,12 @@ INSERT INTO drill_answers (session_id, card_id, user_answer, is_correct, self_ra
 ON CONFLICT (id) DO NOTHING;
 
 -- ── FSRS Cards (Alice's review schedule) ──────────────
-INSERT INTO fsrs_cards (id, user_id, card_id, due, stability, difficulty, elapsed_days, scheduled_days, reps, lapses, state, last_review) VALUES
-  (alice_id::text || '_' || card_inu_id::text,    alice_id, card_inu_id,    '2026-03-26 10:00:00+00', 4.5, 5.0, 1, 3, 1, 0, 2, '2026-03-25 10:02:00+00'),
-  (alice_id::text || '_' || card_neko_id::text,   alice_id, card_neko_id,   '2026-03-28 10:00:00+00', 8.0, 4.0, 1, 5, 1, 0, 2, '2026-03-25 10:04:00+00'),
-  (alice_id::text || '_' || card_tori_id::text,   alice_id, card_tori_id,   '2026-03-26 10:00:00+00', 4.5, 5.0, 1, 3, 1, 0, 2, '2026-03-25 10:06:00+00'),
-  (alice_id::text || '_' || card_hana_id::text,   alice_id, card_hana_id,   '2026-03-26 10:00:00+00', 2.0, 7.0, 1, 1, 1, 0, 1, '2026-03-25 10:10:00+00')
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO fsrs_cards (user_id, card_id, due, stability, difficulty, elapsed_days, scheduled_days, reps, lapses, state, last_review) VALUES
+  (alice_id, card_inu_id,  '2026-03-26 10:00:00+00', 4.5, 5.0, 1, 3, 1, 0, 2, '2026-03-25 10:02:00+00'),
+  (alice_id, card_neko_id, '2026-03-28 10:00:00+00', 8.0, 4.0, 1, 5, 1, 0, 2, '2026-03-25 10:04:00+00'),
+  (alice_id, card_tori_id, '2026-03-26 10:00:00+00', 4.5, 5.0, 1, 3, 1, 0, 2, '2026-03-25 10:06:00+00'),
+  (alice_id, card_hana_id, '2026-03-26 10:00:00+00', 2.0, 7.0, 1, 1, 1, 0, 1, '2026-03-25 10:10:00+00')
+ON CONFLICT (user_id, card_id) DO NOTHING;
 
 -- ── Review Logs ───────────────────────────────────────
 INSERT INTO review_logs (user_id, card_id, rating, scheduled_days, elapsed_days, review, state) VALUES
