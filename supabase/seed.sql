@@ -28,10 +28,10 @@
 -- Change these 4 lines to match your real auth UUIDs:
 DO $$
 DECLARE
-  researcher_id uuid := 'edc521e5-76cf-4879-bdc6-126c84f63e05';
-  alice_id      uuid := '1f2d72d2-74ce-418d-9a7e-80d6f00ebf7c';
-  bob_id        uuid := 'f1f55d61-11a6-4834-8a29-d4eb23873b3b';
-  carol_id      uuid := '26f90ecf-33d7-471b-a86c-29576010ffb2';
+    researcher_id uuid := 'ca8a9dd9-0de1-4bee-9b90-c64c12cbc15f';
+    alice_id      uuid := 'bbf5adfb-4287-4348-8b44-95df2a38b8c1';
+    bob_id        uuid := '156a01d7-bec5-4013-a12c-12424de66538';
+    carol_id      uuid := 'd358a4bd-f653-4800-9d22-70bad04400c1';
 BEGIN
 
 -- ── Profiles ──────────────────────────────────────────
