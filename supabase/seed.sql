@@ -35,11 +35,11 @@ DECLARE
 BEGIN
 
 -- ── Profiles ──────────────────────────────────────────
-INSERT INTO profiles (id, email, display_name, role, target_language) VALUES
-  (researcher_id, 'researcher@test.com', 'Dr. Test', 'researcher',          NULL),
-  (alice_id,      'alice@test.com',      'Alice',    'group_a_participant',  'japanese'),
-  (bob_id,        'bob@test.com',        'Bob',      'group_a_participant',  'japanese'),
-  (carol_id,      'carol@test.com',      'Carol',    'group_b_participant',  'japanese')
+INSERT INTO profiles (id, display_name, role, target_language) VALUES
+  (researcher_id, 'Dr. Test', 'researcher',          NULL),
+  (alice_id,      'Alice',    'group_a_participant',  'japanese'),
+  (bob_id,        'Bob',      'group_a_participant',  'japanese'),
+  (carol_id,      'Carol',    'group_b_participant',  'japanese')
 ON CONFLICT (id) DO NOTHING;
 
 -- ── Decks ──────────────────────────────────────────────
@@ -158,12 +158,12 @@ INSERT INTO research_codes (id, code, target_role, unlocks, created_by) VALUES
   ('00000000-0000-0000-0000-00000000006b', 'VOCAB-B-002',   'group_b_participant', 'vocabulary_test_b',            researcher_id)
 ON CONFLICT (id) DO NOTHING;
 
--- ── Sample Quiz Session (Alice completed one quiz) ──────
-INSERT INTO quiz_sessions (id, user_id, deck_id, previewed, total_questions, correct_count, started_at, completed_at) VALUES
+-- ── Sample Drill Session (Alice completed one drill) ─────
+INSERT INTO drill_sessions (id, user_id, deck_id, previewed, total_questions, correct_count, started_at, completed_at) VALUES
   ('00000000-0000-0000-0000-000000000040', alice_id, '00000000-0000-0000-0000-000000000010', true, 5, 4, '2026-03-25 10:00:00+00', '2026-03-25 10:15:00+00')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO quiz_answers (id, session_id, card_id, user_answer, is_correct, self_rating, answered_at) VALUES
+INSERT INTO drill_answers (id, session_id, card_id, user_answer, is_correct, self_rating, answered_at) VALUES
   ('00000000-0000-0000-0000-000000000070', '00000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000020', 'dog',    true,  3,    '2026-03-25 10:02:00+00'),
   ('00000000-0000-0000-0000-000000000071', '00000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000021', 'cat',    true,  4,    '2026-03-25 10:04:00+00'),
   ('00000000-0000-0000-0000-000000000072', '00000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000022', 'bird',   true,  3,    '2026-03-25 10:06:00+00'),
