@@ -23,7 +23,7 @@ CREATE EXTENSION IF NOT EXISTS moddatetime SCHEMA extensions;
 -- via the session (supabase.auth.getUser()).
 CREATE TABLE profiles (
   id              uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  display_name    text NOT NULL,
+  username        text NOT NULL,
   role            text NOT NULL DEFAULT 'group_a_participant'
                   CHECK (role IN ('group_a_participant', 'group_b_participant', 'researcher')),
   avatar_url      text,
@@ -379,7 +379,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON streaks
 CREATE OR REPLACE VIEW leaderboard WITH (security_invoker = true) AS
 SELECT
   p.id AS user_id,
-  p.display_name,
+  p.username,
   p.target_language,
   COALESCE(SUM(qs.correct_count), 0)::int AS drill_score,
   COALESCE(rc.review_count, 0)::int       AS review_count,
@@ -392,7 +392,7 @@ LEFT JOIN (
 ) rc ON rc.user_id = p.id
 LEFT JOIN streaks s ON s.user_id = p.id
 WHERE p.role = 'group_a_participant'
-GROUP BY p.id, p.display_name, p.target_language, rc.review_count, s.current_streak
+GROUP BY p.id, p.username, p.target_language, rc.review_count, s.current_streak
 ORDER BY drill_score DESC;
 
 -- ══════════════════════════════════════════════════════
