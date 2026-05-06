@@ -80,24 +80,38 @@ DECLARE
 BEGIN
 
 -- ── Auth Users ────────────────────────────────────────
+-- GoTrue requires all varchar token/change columns to be '' not NULL.
+-- phone must remain NULL (unique constraint).
 INSERT INTO auth.users (
   id, instance_id, aud, role,
   email, encrypted_password, email_confirmed_at,
   raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token,
+  email_change, email_change_token_new, email_change_token_current,
+  phone_change, phone_change_token,
+  reauthentication_token,
   created_at, updated_at
 ) VALUES
   (auth_researcher, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
    'researcher@test.com', crypt('password123', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{}', now(), now()),
+   '{"provider":"email","providers":["email"]}', '{}',
+   '', '', '', '', '', '', '', '',
+   now(), now()),
   (auth_alice,      '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
    'alice@test.com',      crypt('password123', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{}', now(), now()),
+   '{"provider":"email","providers":["email"]}', '{}',
+   '', '', '', '', '', '', '', '',
+   now(), now()),
   (auth_bob,        '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
    'bob@test.com',        crypt('password123', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{}', now(), now()),
+   '{"provider":"email","providers":["email"]}', '{}',
+   '', '', '', '', '', '', '', '',
+   now(), now()),
   (auth_carol,      '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
    'carol@test.com',      crypt('password123', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{}', now(), now())
+   '{"provider":"email","providers":["email"]}', '{}',
+   '', '', '', '', '', '', '', '',
+   now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO auth.identities (
@@ -120,11 +134,11 @@ ON CONFLICT (id) DO NOTHING;
 
 -- ── Profiles ──────────────────────────────────────────
 -- id = local app UUID (p_*), user_id = auth UUID (auth_*)
-INSERT INTO profiles (id, user_id, username, role, target_language, created_at, updated_at) VALUES
-  (p_researcher, auth_researcher, 'Dr. Test', 'researcher',          NULL,       now(), now()),
-  (p_alice,      auth_alice,      'Alice',    'group_a_participant',  'japanese', now(), now()),
-  (p_bob,        auth_bob,        'Bob',      'group_a_participant',  'japanese', now(), now()),
-  (p_carol,      auth_carol,      'Carol',    'group_b_participant',  'japanese', now(), now())
+INSERT INTO profiles (id, user_id, username, role, is_anonymous, created_at, updated_at) VALUES
+  (p_researcher, auth_researcher, 'Dr. Test', 'researcher',          false, now(), now()),
+  (p_alice,      auth_alice,      'Alice',    'group_a_participant',  false, now(), now()),
+  (p_bob,        auth_bob,        'Bob',      'group_a_participant',  false, now(), now()),
+  (p_carol,      auth_carol,      'Carol',    'group_b_participant',  false, now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 -- ── Decks ─────────────────────────────────────────────
@@ -266,11 +280,11 @@ ON CONFLICT (id) DO NOTHING;
 
 -- ── Research Profiles ─────────────────────────────────
 INSERT INTO research_profiles
-  (id, user_id, user_name, first_name, last_name, age, role, target_language, created_at)
+  (id, user_id, first_name, last_name, age, role, goal, created_at)
 VALUES
-  (rp_alice, p_alice, 'Alice', 'Alice', 'Smith', 21, 'group_a_participant', 'japanese', now()),
-  (rp_bob,   p_bob,   'Bob',   'Bob',   'Jones', 22, 'group_a_participant', 'japanese', now()),
-  (rp_carol, p_carol, 'Carol', 'Carol', 'Lee',   20, 'group_b_participant', 'japanese', now())
+  (rp_alice, p_alice, 'Alice', 'Smith', 21, 'group_a_participant', 'japanese', now()),
+  (rp_bob,   p_bob,   'Bob',   'Jones', 22, 'group_a_participant', 'japanese', now()),
+  (rp_carol, p_carol, 'Carol', 'Lee',   20, 'group_b_participant', 'japanese', now())
 ON CONFLICT (id) DO NOTHING;
 
 -- ── Research Codes ────────────────────────────────────

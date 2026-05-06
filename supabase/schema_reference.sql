@@ -22,12 +22,13 @@ CREATE EXTENSION IF NOT EXISTS moddatetime SCHEMA extensions;
 -- Email is intentionally omitted — read it from auth.users
 -- via the session (supabase.auth.getUser()).
 CREATE TABLE profiles (
-  id              uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         uuid NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
   username        text NOT NULL,
   role            text NOT NULL DEFAULT 'group_a_participant'
                   CHECK (role IN ('group_a_participant', 'group_b_participant', 'researcher')),
   avatar_url      text,
-  target_language text,
+  is_anonymous    bool NOT NULL DEFAULT true,
   created_at      timestamptz NOT NULL DEFAULT now(),
   updated_at      timestamptz NOT NULL DEFAULT now()
 );
@@ -379,49 +380,41 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON streaks
 CREATE OR REPLACE VIEW leaderboard WITH (security_invoker = true) AS
 SELECT
   p.id AS user_id,
-  p.username,
-  p.target_language,
   COALESCE(SUM(qs.correct_count), 0)::int AS drill_score,
-  COALESCE(rc.review_count, 0)::int       AS review_count,
-  COALESCE(s.current_streak, 0)           AS current_streak
+  COALESCE(rc.review_count, 0)::int       AS review_count
 FROM profiles p
 LEFT JOIN drill_sessions qs ON qs.user_id = p.id AND qs.completed_at IS NOT NULL
 LEFT JOIN (
   SELECT user_id, COUNT(*)::int AS review_count
   FROM review_logs GROUP BY user_id
 ) rc ON rc.user_id = p.id
-LEFT JOIN streaks s ON s.user_id = p.id
 WHERE p.role = 'group_a_participant'
-GROUP BY p.id, p.username, p.target_language, rc.review_count, s.current_streak
+GROUP BY p.id, rc.review_count
 ORDER BY drill_score DESC;
 
 -- ══════════════════════════════════════════════════════
 -- RESEARCH TABLES
 -- ══════════════════════════════════════════════════════
 
--- ── research_users ────────────────────────────────────
-CREATE TABLE research_users (
+-- ── research_profiles ────────────────────────────────
+CREATE TABLE research_profiles (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id         uuid NOT NULL UNIQUE REFERENCES profiles(id) ON DELETE CASCADE,
+  first_name      text NOT NULL DEFAULT '',
+  last_name       text NOT NULL DEFAULT '',
+  age             int  NOT NULL DEFAULT 0,
   role            text NOT NULL CHECK (role IN ('group_a_participant', 'group_b_participant')),
-  target_language text NOT NULL,
+  goal            text NOT NULL,
   created_at      timestamptz NOT NULL DEFAULT now()
 );
-ALTER TABLE research_users ENABLE ROW LEVEL SECURITY;
--- Merged SELECT: users see own row, researchers see all.
-CREATE POLICY "research_users: read" ON research_users FOR SELECT
-  USING (
-    (select auth.uid()) = user_id
-    OR EXISTS (SELECT 1 FROM profiles WHERE id = (select auth.uid()) AND role = 'researcher')
-  );
-CREATE POLICY "research_users: researchers manage" ON research_users FOR INSERT
-  WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = (select auth.uid()) AND role = 'researcher'));
-CREATE POLICY "research_users: researchers update" ON research_users FOR UPDATE
-  USING     (EXISTS (SELECT 1 FROM profiles WHERE id = (select auth.uid()) AND role = 'researcher'))
-  WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = (select auth.uid()) AND role = 'researcher'));
-CREATE POLICY "research_users: researchers delete" ON research_users FOR DELETE
-  USING (EXISTS (SELECT 1 FROM profiles WHERE id = (select auth.uid()) AND role = 'researcher'));
-CREATE INDEX ON research_users (user_id);
+ALTER TABLE research_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "research_profiles: researcher manages" ON research_profiles FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM profiles WHERE id = current_profile_id() AND role = 'researcher'
+  ));
+CREATE POLICY "research_profiles: read own" ON research_profiles FOR SELECT
+  USING (user_id = current_profile_id());
+CREATE INDEX ON research_profiles (user_id);
 
 -- ── research_codes ────────────────────────────────────
 CREATE TABLE research_codes (

@@ -35,7 +35,7 @@ CREATE TABLE profiles (
   role            text NOT NULL DEFAULT 'group_a_participant'
                   CHECK (role IN ('group_a_participant', 'group_b_participant', 'researcher')),
   avatar_url      text,
-  target_language text,
+  is_anonymous    bool NOT NULL DEFAULT true,
   created_at      timestamptz NOT NULL DEFAULT now(),
   updated_at      timestamptz NOT NULL DEFAULT now()
 );
@@ -491,12 +491,9 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON streaks
 -- Only group_a_participant profiles appear.
 CREATE VIEW leaderboard WITH (security_invoker = true) AS
 SELECT
-  p.id              AS user_id,
-  p.username        AS user_name,
-  p.target_language AS target_language,
+  p.id AS user_id,
   COALESCE(SUM(ds.correct_count), 0)::int AS drill_score,
-  COALESCE(rc.review_count, 0)::int       AS review_count,
-  COALESCE(s.current_streak, 0)           AS current_streak
+  COALESCE(rc.review_count, 0)::int       AS review_count
 FROM profiles p
 LEFT JOIN drill_sessions ds
   ON ds.user_id = p.id AND ds.completed_at IS NOT NULL
@@ -506,9 +503,8 @@ LEFT JOIN (
   JOIN fsrs_cards fc ON fc.id = rl.fsrs_card_id
   GROUP BY fc.user_id
 ) rc ON rc.user_id = p.user_id
-LEFT JOIN streaks s ON s.user_id = p.id
 WHERE p.role = 'group_a_participant'
-GROUP BY p.id, p.username, p.target_language, rc.review_count, s.current_streak
+GROUP BY p.id, rc.review_count
 ORDER BY drill_score DESC;
 
 -- ══════════════════════════════════════════════════════
@@ -521,13 +517,12 @@ ORDER BY drill_score DESC;
 CREATE TABLE research_profiles (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id         uuid NOT NULL UNIQUE REFERENCES profiles(id) ON DELETE CASCADE,
-  user_name       text,
   first_name      text NOT NULL DEFAULT '',
   last_name       text NOT NULL DEFAULT '',
   age             int  NOT NULL DEFAULT 0,
   role            text NOT NULL
                   CHECK (role IN ('group_a_participant', 'group_b_participant')),
-  target_language text NOT NULL,
+  goal            text NOT NULL,
   created_at      timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE research_profiles ENABLE ROW LEVEL SECURITY;
